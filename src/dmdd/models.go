@@ -2,40 +2,57 @@ package main
 
 import (
 	"database/sql"
-	_ "fmt"
+	"errors"
+	"fmt"
 	"github.com/coopernurse/gorp"
-	_ "github.com/lib/pq"
+	"github.com/lib/pq"
 	"log"
 	"os"
 )
 
-// The database connection
 var db sql.DB
 var dbmap *gorp.DbMap
 
-type Invoice struct {
-	Id       int64
-	Created  int64
-	Updated  int64
-	Memo     string
-	PersonId int64
+type AMP struct {
+	Id   int64
+	Apid string `xml:"APID"`
+	Vpid string `xml:"VPID"`
+	Name string `xml:"NM"`
 }
 
+// Initialises the connection to the database (based on configuration)
+// and sets up the ORM ready for use.
 func db_init() error {
-	db, err := sql.Open("postgres", config.Database)
+	connstr, err := pq.ParseURL(config.Database)
+	if err != nil {
+		return errors.New(fmt.Sprintf("Invalid connection string: %s", config.Database))
+	}
+
+	db, err := sql.Open("postgres", connstr)
 	if err != nil {
 		return err
 	}
 
 	dbmap = &gorp.DbMap{Db: db, Dialect: gorp.PostgresDialect{}}
-	dbmap.TraceOn("[gorp]", log.New(os.Stdout, "myapp:", log.Lmicroseconds))
-	dbmap.AddTableWithName(Invoice{}, "invoice_test").SetKeys(true, "Id")
+	if config.Debug {
+		dbmap.TraceOn("[gorp]", log.New(os.Stdout, "myapp:", log.Lmicroseconds))
+	}
+
+	dbmap.AddTableWithName(AMP{}, "actual_medical_product").SetKeys(true, "Id")
 	dbmap.CreateTablesIfNotExists()
 
 	return nil
 }
 
+// Clean up the DB, basically just drop the tables
+func db_clean() {
+	dbmap.DropTables()
+}
+
+// Close the conenction to the database
 func db_close() {
-	dbmap.TraceOff()
+	if config.Debug {
+		dbmap.TraceOff()
+	}
 	db.Close()
 }

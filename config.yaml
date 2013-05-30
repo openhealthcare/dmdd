@@ -1,5 +1,5 @@
-database: user=ross dbname=dmd sslmode=disable
+database: postgres://ross:secret/dmd
 server:
   bind: 0.0.0.0
   port: 2112
-
+debug: 0

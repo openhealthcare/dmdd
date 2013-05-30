@@ -7,12 +7,6 @@ import (
 	"os"
 )
 
-type AMP struct {
-	Apid string `xml:"APID"`
-	Vpid string `xml:"VPID"`
-	Name string `xml:"NM"`
-}
-
 func test_xml_parsing() {
 	xmlFile, err := os.Open("/Users/ross/Desktop/Data/DMD/dmd/f_amp2_3160513.xml")
 	if err != nil {
